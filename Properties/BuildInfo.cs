@@ -3,7 +3,7 @@
 internal static class BuildInfo
 {
     public const string NAME = "IntroSkipper";
-    public const string DESCRIPTION = "Skip the intro after game started.";
+    public const string DESCRIPTION = "Skip the intro after game started";
     public const string AUTHOR = "MrS4g0";
     public const string COMPANY = null;
     public const string VERSION = "1.0.0";
