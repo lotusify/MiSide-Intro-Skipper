@@ -24,40 +24,65 @@ public static class IntroSkipper
 
     private static void OnSceneWasInitialized(int buildIndex, string sceneName)
     {
-        // Xử lý scene Aihasto
         if (sceneName == "SceneAihasto")
         {
-            try
-            {
-                PlayableDirector? playableDirector = GameObject
-                    .Find("Scene")
-                    ?.GetComponent<PlayableDirector>();
-                
-                if (playableDirector != null)
-                {
-                    playableDirector.time = playableDirector.duration;
-                    ModCore.Log("Aihasto intro skipped");
-                }
-            }
-            catch (Exception e)
-            {
-                ModCore.LogError(e.Message);
-            }
+            HandleAihastoScene();
         }
-        // Thêm xử lý cho SceneMenu
         else if (sceneName == "SceneMenu")
         {
-            try
+            HandleMenuScene();
+        }
+    }
+
+    private static void HandleAihastoScene()
+    {
+        try
+        {
+            PlayableDirector? playableDirector = GameObject
+                .Find("Scene")
+                ?.GetComponent<PlayableDirector>();
+            
+            if (playableDirector != null)
             {
-                // Ẩn các thành phần UI
-                GameObject.Find("NameGame")?.SetActive(false);
-                GameObject.Find("FrameMenu")?.SetActive(false);
-                ModCore.Log("Đã ẩn menu components");
+                playableDirector.time = playableDirector.duration;
+                ModCore.Log("Aihasto intro skipped");
             }
-            catch (Exception e)
+        }
+        catch (Exception e)
+        {
+            ModCore.LogError(e.Message);
+        }
+    }
+
+    private static void HandleMenuScene()
+    {
+        try
+        {
+            // Tìm root object MenuGame trước
+            GameObject menuGame = GameObject.Find("MenuGame");
+            if (menuGame == null)
             {
-                ModCore.LogError($"Lỗi ẩn menu: {e.Message}");
+                ModCore.LogError("Không tìm thấy MenuGame");
+                return;
             }
+
+            // Tìm theo transform con để tránh conflict
+            Transform canvasTransform = menuGame.transform.Find("Canvas");
+            if (canvasTransform == null)
+            {
+                ModCore.LogError("Không tìm thấy Canvas");
+                return;
+            }
+
+            // Ẩn các thành phần cụ thể
+            canvasTransform.Find("NameGame")?.gameObject.SetActive(false);
+            canvasTransform.Find("FrameMenu")?.gameObject.SetActive(false);
+            
+            ModCore.Log("Đã ẩn thành phần menu");
+        }
+        catch (Exception e)
+        {
+            ModCore.LogError($"Lỗi ẩn menu: {e.Message}");
         }
     }
 
@@ -79,7 +104,7 @@ public static class IntroSkipper
             }
             catch (Exception)
             {
-                // Bỏ qua exception như trước
+                // Bỏ qua exception
             }
 
             ModCore.Log("The opening menu cutscene should be skipped");
