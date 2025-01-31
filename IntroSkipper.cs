@@ -2,7 +2,6 @@ using HarmonyLib;
 using Mod.Utils;
 using UnityEngine;
 using UnityEngine.Playables;
-using System.Collections;
 #if ML
 using Il2Cpp;
 #elif BIE
@@ -14,18 +13,12 @@ namespace Mod;
 public static class IntroSkipper
 {
     private static HarmonyLib.Harmony _harmony = null!;
-    private static GameObject _coroutineRunner; // Thêm GameObject để chạy coroutine
 
     public static void Init()
     {
         ModCore.Loader.SceneWasInitialized += OnSceneWasInitialized;
         _harmony = new("com.miside.introskipper");
         _harmony.PatchAll(typeof(Patch));
-        
-        // Tạo GameObject để chạy coroutine
-        _coroutineRunner = new GameObject("CoroutineRunner");
-        UnityEngine.Object.DontDestroyOnLoad(_coroutineRunner);
-        
         ModCore.Log("Initialized");
     }
 
@@ -37,67 +30,10 @@ public static class IntroSkipper
         }
         else if (sceneName == "SceneMenu")
         {
-            // Sử dụng component để chạy coroutine
-            _coroutineRunner.AddComponent<CoroutineRunner>().StartHideCoroutine();
+            HandleMenuScene();
         }
     }
 
-    // Thêm class helper để chạy coroutine
-    private class CoroutineRunner : MonoBehaviour
-    {
-        public void StartHideCoroutine()
-        {
-            StartCoroutine(HideMenuWithRetry());
-        }
-
-        private IEnumerator HideMenuWithRetry()
-        {
-            int attempts = 0;
-            bool success = false;
-            
-            while (attempts < 5 && !success)
-            {
-                yield return new WaitForSeconds(0.1f * attempts);
-                
-                try
-                {
-                    GameObject menuGame = GameObject.Find("MenuGame");
-                    if (menuGame == null) continue;
-
-                    Transform canvasTransform = menuGame.transform.Find("Canvas");
-                    if (canvasTransform == null) continue;
-
-                    Transform nameGame = canvasTransform.Find("NameGame");
-                    Transform frameMenu = canvasTransform.Find("FrameMenu");
-                    
-                    if (nameGame != null && frameMenu != null)
-                    {
-                        nameGame.gameObject.SetActive(false);
-                        frameMenu.gameObject.SetActive(false);
-                        ModCore.Log("UI elements hidden successfully!");
-                        success = true;
-                    }
-                }
-                catch (Exception e)
-                {
-                    ModCore.LogError(e.ToString());
-                }
-                finally
-                {
-                    attempts++;
-                }
-            }
-
-            if (!success)
-            {
-                ModCore.LogError("Failed to hide UI elements after 5 attempts");
-            }
-            
-            Destroy(this); // Hủy component sau khi hoàn thành
-        }
-    }
-
-    // Phần còn lại giữ nguyên
     private static void HandleAihastoScene()
     {
         try
@@ -118,22 +54,64 @@ public static class IntroSkipper
         }
     }
 
+    private static void HandleMenuScene()
+    {
+        try
+        {
+            // Tìm và tắt Renderer cho các object
+            DisableRenderer("MenuGame/Canvas/NameGame");
+            DisableRenderer("MenuGame/Canvas/FrameMenu");
+            ModCore.Log("Đã tắt Renderer thành công");
+        }
+        catch (Exception e)
+        {
+            ModCore.LogError(e.Message);
+        }
+    }
+
+    private static void DisableRenderer(string path)
+    {
+        GameObject obj = GameObject.Find(path);
+        if (obj != null)
+        {
+            Renderer renderer = obj.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+            else
+            {
+                ModCore.LogError($"Không tìm thấy Renderer trên {path}");
+            }
+        }
+        else
+        {
+            ModCore.LogError($"Không tìm thấy object: {path}");
+        }
+    }
+
     [HarmonyPatch]
     private static class Patch
     {
         [HarmonyPatch(typeof(Menu), "Start")]
         private static void Postfix(Menu __instance)
         {
-            if (SceneTracker.LastSceneName == "Scene 16 - TheEnd") return;
+            if (SceneTracker.LastSceneName == "Scene 16 - TheEnd")
+            {
+                return;
+            }
 
             try
             {
                 __instance.eventSkip.Invoke();
                 __instance.SkipStart();
             }
-            catch (Exception) { /* Ignored */ }
+            catch (Exception)
+            {
+                // Bỏ qua exception
+            }
 
-            ModCore.Log("Menu cutscene skipped");
+            ModCore.Log("The opening menu cutscene should be skipped");
         }
     }
 }
