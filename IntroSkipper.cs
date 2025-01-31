@@ -24,11 +24,17 @@ public static class IntroSkipper
 
     private static void OnSceneWasInitialized(int buildIndex, string sceneName)
     {
+		/*
         if (sceneName == "SceneAihasto")
         {
             HandleAihastoScene();
         }
         else if (sceneName == "SceneMenu")
+        {
+            HandleMenuScene();
+        }
+		*/
+		if (sceneName == "SceneMenu")
         {
             HandleMenuScene();
         }
