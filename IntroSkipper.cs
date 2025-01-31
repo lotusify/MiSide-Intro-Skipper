@@ -50,8 +50,8 @@ public static class IntroSkipper
             try
             {
                 // Ẩn các thành phần UI
-                GameObject.Find("MenuGame/Canvas/NameGame")?.SetActive(false);
-                GameObject.Find("MenuGame/Canvas/FrameMenu")?.SetActive(false);
+                GameObject.Find("NameGame")?.SetActive(false);
+                GameObject.Find("FrameMenu")?.SetActive(false);
                 ModCore.Log("Đã ẩn menu components");
             }
             catch (Exception e)
