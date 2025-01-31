@@ -38,12 +38,15 @@ public static class IntroSkipper
     {
         try
         {
-            var playableDirector = GameObject
+            PlayableDirector? playableDirector = GameObject
                 .Find("Scene")
                 ?.GetComponent<PlayableDirector>();
             
-            playableDirector?.PlayableGraph.GetRootPlayable(0).SetDuration(0);
-            ModCore.Log("Aihasto intro skipped");
+            if (playableDirector != null)
+            {
+                playableDirector.time = playableDirector.duration;
+                ModCore.Log("Aihasto intro skipped");
+            }
         }
         catch (Exception e)
         {
@@ -55,44 +58,60 @@ public static class IntroSkipper
     {
         try
         {
-            // Tìm và ẩn Canvas chính
-            GameObject.Find("MenuGame/Canvas")?.SetActive(false);
-            ModCore.Log("Đã ẩn thành công Canvas menu");
-            
-            // Phương pháp dự phòng sau 2 giây
-            ModCore.Loader.DelayedAction(2f, () => {
-                var backupCanvas = GameObject.Find("MenuGame/Canvas");
-                if(backupCanvas != null && backupCanvas.activeSelf) 
-                {
-                    backupCanvas.SetActive(false);
-                    ModCore.Log("Đã ẩn Canvas bằng phương pháp dự phòng");
-                }
-            });
+            // Tìm và tắt Renderer cho các object
+            DisableRenderer("MenuGame/Canvas/NameGame");
+            DisableRenderer("MenuGame/Canvas/FrameMenu");
+            ModCore.Log("Đã tắt Renderer thành công");
         }
         catch (Exception e)
         {
-            ModCore.LogError($"Lỗi ẩn menu: {e.Message}");
+            ModCore.LogError(e.Message);
         }
     }
 
-/*
+    private static void DisableRenderer(string path)
+    {
+        GameObject obj = GameObject.Find(path);
+        if (obj != null)
+        {
+            Renderer renderer = obj.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                renderer.enabled = false;
+            }
+            else
+            {
+                ModCore.LogError($"Không tìm thấy Renderer trên {path}");
+            }
+        }
+        else
+        {
+            ModCore.LogError($"Không tìm thấy object: {path}");
+        }
+    }
+
     [HarmonyPatch]
     private static class Patch
     {
         [HarmonyPatch(typeof(Menu), "Start")]
         private static void Postfix(Menu __instance)
         {
-            if (SceneTracker.LastSceneName == "Scene 16 - TheEnd") return;
+            if (SceneTracker.LastSceneName == "Scene 16 - TheEnd")
+            {
+                return;
+            }
 
             try
             {
                 __instance.eventSkip.Invoke();
                 __instance.SkipStart();
             }
-            catch { }
+            catch (Exception)
+            {
+                // Bỏ qua exception
+            }
 
-            ModCore.Log("Menu cutscene skipped");
+            ModCore.Log("The opening menu cutscene should be skipped");
         }
     }
-	*/
 }
