@@ -1,7 +1,7 @@
 using HarmonyLib;
 using Mod.Utils;
 using UnityEngine;
-
+using UnityEngine.Playables;
 #if ML
 using Il2Cpp;
 #elif BIE
@@ -21,12 +21,33 @@ public static class IntroSkipper
         _harmony.PatchAll(typeof(Patch));
         ModCore.Log("Initialized");
     }
-    
+
     private static void OnSceneWasInitialized(int buildIndex, string sceneName)
     {
-        if (sceneName == "SceneMenu")
+        if (sceneName == "SceneAihasto")
+        {
+            HandleAihastoScene();
+        }
+        else if (sceneName == "SceneMenu")
         {
             HandleMenuScene();
+        }
+    }
+
+    private static void HandleAihastoScene()
+    {
+        try
+        {
+            var playableDirector = GameObject
+                .Find("Scene")
+                ?.GetComponent<PlayableDirector>();
+            
+            playableDirector?.PlayableGraph.GetRootPlayable(0).SetDuration(0);
+            ModCore.Log("Aihasto intro skipped");
+        }
+        catch (Exception e)
+        {
+            ModCore.LogError(e.Message);
         }
     }
 
@@ -34,26 +55,44 @@ public static class IntroSkipper
     {
         try
         {
-            // Disable the entire Canvas object
-            DisableGameObject("MenuGame/Canvas");
-            ModCore.Log("Canvas disabled successfully");
+            // Tìm và ẩn Canvas chính
+            GameObject.Find("MenuGame/Canvas")?.SetActive(false);
+            ModCore.Log("Đã ẩn thành công Canvas menu");
+            
+            // Phương pháp dự phòng sau 2 giây
+            ModCore.Loader.DelayedAction(2f, () => {
+                var backupCanvas = GameObject.Find("MenuGame/Canvas");
+                if(backupCanvas != null && backupCanvas.activeSelf) 
+                {
+                    backupCanvas.SetActive(false);
+                    ModCore.Log("Đã ẩn Canvas bằng phương pháp dự phòng");
+                }
+            });
         }
-        catch (System.Exception e)
+        catch (Exception e)
         {
-            ModCore.LogError($"Error while handling menu scene: {e.Message}");
+            ModCore.LogError($"Lỗi ẩn menu: {e.Message}");
         }
     }
 
-    private static void DisableGameObject(string path)
+/*
+    [HarmonyPatch]
+    private static class Patch
     {
-        GameObject obj = GameObject.Find(path);
-        if (obj != null)
+        [HarmonyPatch(typeof(Menu), "Start")]
+        private static void Postfix(Menu __instance)
         {
-            obj.SetActive(false); // Disable the entire GameObject
-        }
-        else
-        {
-            ModCore.LogError($"GameObject not found: {path}");
+            if (SceneTracker.LastSceneName == "Scene 16 - TheEnd") return;
+
+            try
+            {
+                __instance.eventSkip.Invoke();
+                __instance.SkipStart();
+            }
+            catch { }
+
+            ModCore.Log("Menu cutscene skipped");
         }
     }
+	*/
 }
