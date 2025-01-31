@@ -17,37 +17,47 @@ public static class IntroSkipper
     public static void Init()
     {
         ModCore.Loader.SceneWasInitialized += OnSceneWasInitialized;
-
         _harmony = new("com.miside.introskipper");
         _harmony.PatchAll(typeof(Patch));
-
         ModCore.Log("Initialized");
     }
 
     private static void OnSceneWasInitialized(int buildIndex, string sceneName)
     {
-        if (sceneName != "SceneAihasto")
+        // Xử lý scene Aihasto
+        if (sceneName == "SceneAihasto")
         {
-            return;
-        }
-
-        try
-        {
-            PlayableDirector? playableDirector = GameObject
-                .Find("Scene")
-                ?.GetComponent<PlayableDirector>();
-            if (playableDirector == null)
+            try
             {
-                return;
+                PlayableDirector? playableDirector = GameObject
+                    .Find("Scene")
+                    ?.GetComponent<PlayableDirector>();
+                
+                if (playableDirector != null)
+                {
+                    playableDirector.time = playableDirector.duration;
+                    ModCore.Log("Aihasto intro skipped");
+                }
             }
-
-            playableDirector.time = playableDirector.duration;
-
-            ModCore.Log("Aihasto intro skipped");
+            catch (Exception e)
+            {
+                ModCore.LogError(e.Message);
+            }
         }
-        catch (Exception e)
+        // Thêm xử lý cho SceneMenu
+        else if (sceneName == "SceneMenu")
         {
-            ModCore.LogError(e.Message);
+            try
+            {
+                // Ẩn các thành phần UI
+                GameObject.Find("MenuGame/Canvas/NameGame")?.SetActive(false);
+                GameObject.Find("MenuGame/Canvas/FrameMenu")?.SetActive(false);
+                ModCore.Log("Đã ẩn menu components");
+            }
+            catch (Exception e)
+            {
+                ModCore.LogError($"Lỗi ẩn menu: {e.Message}");
+            }
         }
     }
 
@@ -69,10 +79,7 @@ public static class IntroSkipper
             }
             catch (Exception)
             {
-                /*
-                    __instance.SkipStart() throws an exception
-                    but it works anyway and we ignore this exception
-                */
+                // Bỏ qua exception như trước
             }
 
             ModCore.Log("The opening menu cutscene should be skipped");
