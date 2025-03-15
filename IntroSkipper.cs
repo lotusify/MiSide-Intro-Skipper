@@ -8,74 +8,50 @@ using Il2Cpp;
 using BepInEx.IL2CPP;
 #endif
 
-namespace Mod;
-
-public static class IntroSkipper
+namespace Mod
 {
-    private static HarmonyLib.Harmony _harmony = null!;
-
-    public static void Init()
+    public static class IntroSkipper
     {
-        ModCore.Loader.SceneWasInitialized += OnSceneWasInitialized;
+        private static HarmonyLib.Harmony _harmony = null!;
 
-        _harmony = new("com.miside.introskipper");
-        _harmony.PatchAll(typeof(Patch));
-
-        ModCore.Log("Initialized");
-    }
-
-    private static void OnSceneWasInitialized(int buildIndex, string sceneName)
-    {
-        if (sceneName != "SceneAihasto")
+        public static void Init()
         {
-            return;
+            ModCore.Loader.SceneWasInitialized += OnSceneWasInitialized;
+
+            _harmony = new("com.miside.introskipper");
+            // Remove the PatchAll call since the Patch class is removed
+            // _harmony.PatchAll(typeof(Patch));
+
+            ModCore.Log("Initialized");
         }
 
-        try
+        private static void OnSceneWasInitialized(int buildIndex, string sceneName)
         {
-            PlayableDirector? playableDirector = GameObject
-                .Find("Scene")
-                ?.GetComponent<PlayableDirector>();
-            if (playableDirector == null)
-            {
-                return;
-            }
-
-            playableDirector.time = playableDirector.duration;
-
-            ModCore.Log("Aihasto intro skipped");
-        }
-        catch (Exception e)
-        {
-            ModCore.LogError(e.Message);
-        }
-    }
-
-    [HarmonyPatch]
-    private static class Patch
-    {
-        [HarmonyPatch(typeof(Menu), "Start")]
-        private static void Postfix(Menu __instance)
-        {
-            if (SceneTracker.LastSceneName == "Nothing")
+            if (sceneName != "SceneAihasto")
             {
                 return;
             }
 
             try
             {
-                __instance.eventSkip.Invoke();
-                __instance.SkipStart();
-            }
-            catch (Exception)
-            {
-                /*
-                    __instance.SkipStart() throws an exception
-                    but it works anyway and we ignore this exception
-                */
-            }
+                PlayableDirector? playableDirector = GameObject
+                    .Find("Scene")
+                    ?.GetComponent<PlayableDirector>();
+                if (playableDirector == null)
+                {
+                    return;
+                }
 
-            ModCore.Log("The opening menu cutscene should be skipped");
+                playableDirector.time = playableDirector.duration;
+
+                ModCore.Log("Aihasto intro skipped");
+            }
+            catch (Exception e)
+            {
+                ModCore.LogError(e.Message);
+            }
         }
+
+        // Remove the Patch class and its contents
     }
 }
