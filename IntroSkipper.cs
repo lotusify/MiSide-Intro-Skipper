@@ -51,31 +51,31 @@ public static class IntroSkipper
         }
     }
 
-    // [HarmonyPatch]
-    // private static class Patch
-    // {
-    //     [HarmonyPatch(typeof(Menu), "Start")]
-    //     private static void Postfix(Menu __instance)
-    //     {
-    //         if (SceneTracker.LastSceneName == "Scene 16 - TheEnd")
-    //         {
-    //             return;
-    //         }
+    [HarmonyPatch]
+    private static class Patch
+    {
+        [HarmonyPatch(typeof(Menu), "Start")]
+        private static void Postfix(Menu __instance)
+        {
+            if (SceneTracker.LastSceneName == "Nothing")
+            {
+                return;
+            }
 
-    //         try
-    //         {
-    //             __instance.eventSkip.Invoke();
-    //             __instance.SkipStart();
-    //         }
-    //         catch (Exception)
-    //         {
-    //             /*
-    //                 __instance.SkipStart() throws an exception
-    //                 but it works anyway and we ignore this exception
-    //             */
-    //         }
+            try
+            {
+                __instance.eventSkip.Invoke();
+                __instance.SkipStart();
+            }
+            catch (Exception)
+            {
+                /*
+                    __instance.SkipStart() throws an exception
+                    but it works anyway and we ignore this exception
+                */
+            }
 
-    //         ModCore.Log("The opening menu cutscene should be skipped");
-    //     }
-    // }
+            ModCore.Log("The opening menu cutscene should be skipped");
+        }
+    }
 }
